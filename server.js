@@ -5,18 +5,13 @@ import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoute.js";
 import categoryRoutes from "./routes/categoryRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
-import cors from "cors";
-import path from "path";
-import {fileURLToPath} from "url";
 
 // Configure environment variables
 dotenv.config();
 
 // Connect to the database
 connectDB();
-//esmodule fix
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+
 // Create an Express app
 const app = express();
 
@@ -25,27 +20,28 @@ app.use(express.json());
 app.use(morgan("dev"));
 
 // Enable CORS with options to allow credentials
-app.use(
-  cors({
-    origin: true, // Allow all origins
-    credentials: true, // Allow credentials (cookies, authorization headers, etc.)
-  })
-);
-app.use(express.static(path.join(__dirname,"./client/build")))
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+  );
+  if (req.method === "OPTIONS") {
+    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE");
+    return res.status(200).json({});
+  }
+  next();
+});
 
 // Routes
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/category", categoryRoutes);
 app.use("/api/v1/product", productRoutes);
 
-// Welcome message for root route
-app.use("*",function(req,res){
-  res.sendFile(path.join(__dirname,"./client/build/index.html"))
-})
 // Set up the port
 const PORT = process.env.PORT || 8080;
 
 // Start the server
 app.listen(PORT, () => {
-  console.log(`Server running in ${process.env.DEV_MODE} mode on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
